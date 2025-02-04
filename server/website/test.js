@@ -18,8 +18,8 @@ document.querySelector("button").addEventListener("click", function(event) {
     fetch("", {
         method: "POST",
         body: JSON.stringify({
-            "12": 12,
-            34: "tre",
+            "type": "select-city",
+            "data": {},
         }),
         headers: {
             'Content-Type': 'application/json'
