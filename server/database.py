@@ -4,19 +4,25 @@ import sqlite3
 import os
 import enum
 import configs
-
-DATA_DIR = configs.DATA_DIR
-SQLGEN_FILE = configs.SQLGEN_FILE
+import json
 
 
 class Db:
+    connections = []
+
     def __init__(self, nameDb, dictRes=False):
-        self.__dbpath__ = os.path.join(DATA_DIR, nameDb + ".db")
-        os.makedirs(DATA_DIR, exist_ok=True)
+        # disallow multiple connection to same database!
+        if nameDb in Db.connections:
+            raise ValueError(f"database {nameDb} already opened!")
+        else:
+            Db.connections.append(nameDb)
+
+        self.__dbpath__ = os.path.join(configs.DATA_DIR, nameDb + ".db")
+        os.makedirs(configs.DATA_DIR, exist_ok=True)
         self.__conn__ = sqlite3.connect(self.__dbpath__)
         self.__conn__.execute("PRAGMA foreign_keys = ON")
         self.__cursor__ = self.__conn__.cursor()
-        self.__cursor__.executescript(open(SQLGEN_FILE, "r").read())
+        self.__cursor__.executescript(open(configs.SQLGEN_FILE, "r").read())
         self.__dictRes__ = bool(dictRes)
 
     # public utility functions
@@ -160,3 +166,63 @@ class Db:
         query = "DELETE FROM PAYMENT WHERE paymentId = ?"
         data = (paymentId,)
         return self.__execute__(query, data)
+
+    # interaction with server
+    def __err_msg__(self, msg, status_code=400):
+        return status_code, json.dumps({"status": msg})
+
+    def __err_typeMissingInJson_msg(self, typeKey):
+        return self.__err_msg__(f"missing '{typeKey}' in the json request!")
+
+    def __query_msg__(self, typesReq, requestData, method):
+        acc = []
+        for typeReq in typesReq:
+            if typeReq not in requestData:
+                return self.__err_typeMissingInJson_msg(f"data.{typeReq}")
+            acc.append(requestData[typeReq])
+        try:
+            resDict = method(*acc)
+        except Exception as e:
+            return self.__err_msg__(f"query failed with error: {type(e).__name__}: {e}")
+        return 200, json.dumps({"status": "query was successful!", "res": resDict})
+
+    def answerPostRequest(self, requestJson):
+        try:
+            request = json.loads(requestJson)
+        except:
+            return self.__err_msg__("invalid json!")
+
+        if "type" not in request:
+            return self.__err_typeMissingInJson_msg("type")
+
+        if "data" not in request:
+            return self.__err_typeMissingInJson_msg("data")
+
+        requestType = request["type"]
+        requestData = request["data"]
+
+        match request["type"]:
+            case "insert-city": return self.__query_msg__(["city"], requestData, self.insertCity)
+            case "insert-shop": return self.__query_msg__(["shop"], requestData, self.insertShop)
+            case "insert-method": return self.__query_msg__(["method"], requestData, self.insertMethod)
+            case "insert-item": return self.__query_msg__(["item"], requestData, self.insertItem)
+            case "insert-detail": return self.__query_msg__(["item, paymentId, quantity, unitPrice"], requestData, self.insertDetail)
+            case "insert-payment": return self.__query_msg__(["date", "city", "shop", "method"], requestData, self.insertPayment)
+            case "update-city": return self.__query_msg__(["city", "newCity"], requestData, self.updateCity)
+            case "update-shop": return self.__query_msg__(["shop", "newShop"], requestData, self.updateShop)
+            case "update-method": return self.__query_msg__(["method", "newMethod"], requestData, self.updateMethod)
+            case "update-item": return self.__query_msg__(["item", "newItem"], requestData, self.updateItem)
+            case "update-detail": return self.__query_msg__(["item", "paymentId", "newQuantity", "newUnitPrice"], requestData, self.updateDetail)
+            case "update-payment": return self.__query_msg__(["paymentId", "newDate", "newCity", "newShop", "newMethod"], requestData, self.updatePayment)
+            case "delete-detail": return self.__query_msg__(["item", "paymentId"], requestData, self.deleteDetail)
+            case "delete-payment": return self.__query_msg__(["paymentId"], requestData, self.deletePayment)
+            case "select-city": return self.__query_msg__([], requestData, self.getCity)
+            case "select-shop": return self.__query_msg__([], requestData, self.getShop)
+            case "select-method": return self.__query_msg__([], requestData, self.getMethod)
+            case "select-item": return self.__query_msg__([], requestData, self.getItem)
+            case "select-detail": return self.__query_msg__([], requestData, self.getDetail)
+            case "select-payment": return self.__query_msg__([], requestData, self.getPayment)
+            case "select-fulldetail": return self.__query_msg__([], requestData, self.getFullDetail)
+            case _: return self.__err_msg__("invalid 'type' value in json request!")
+
+        return 200, json.dumps({"status": "TODO!"})
