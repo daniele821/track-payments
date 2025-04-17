@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Local, ParseError, Timelike, Utc};
+use chrono::{DateTime, Datelike, Local, NaiveDate, ParseError, TimeZone, Timelike, Utc};
 use std::{error::Error, fmt::Display};
 pub const DEFAULT_FORMAT: &str = "%Y/%m/%d %H:%M";
 
@@ -15,7 +15,6 @@ pub struct TimeFields {
 #[derive(Debug)]
 pub enum TimeError {
     ParseError(ParseError),
-    InvalidFields(TimeFields),
 }
 
 impl TimeStamp {
@@ -27,6 +26,12 @@ impl TimeStamp {
 }
 
 impl TimeFields {
+    pub fn new(year: i32, month: u32, day: u32, hour: u32, minute: u32) -> Option<Self> {
+        Utc.with_ymd_and_hms(year, month, day, hour, minute, 0)
+            .single()
+            .map(|fields| Self { fields })
+    }
+
     pub fn years(&self) -> i32 {
         self.fields.year()
     }
@@ -54,6 +59,14 @@ impl From<TimeFields> for TimeStamp {
     fn from(value: TimeFields) -> Self {
         Self {
             unix_secs: value.fields.timestamp(),
+        }
+    }
+}
+
+impl From<TimeStamp> for TimeFields {
+    fn from(value: TimeStamp) -> Self {
+        Self {
+            fields: DateTime::from_timestamp(value.unix_secs, 0).unwrap(),
         }
     }
 }
