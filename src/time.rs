@@ -1,6 +1,6 @@
+use chrono::{DateTime, Datelike, Local, NaiveDateTime, ParseError, TimeZone, Timelike, Utc};
 use std::{error::Error, fmt::Display};
 
-use chrono::{DateTime, Datelike, Local, NaiveDateTime, ParseError, TimeZone, Timelike, Utc};
 pub const DEFAULT_FORMAT: &str = "%Y/%m/%d %H:%M";
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
