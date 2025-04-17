@@ -70,6 +70,12 @@ impl From<i64> for TimeStamp {
     }
 }
 
+impl From<&TimeStamp> for i64 {
+    fn from(value: &TimeStamp) -> Self {
+        value.unix_secs
+    }
+}
+
 impl From<&TimeFields> for TimeStamp {
     fn from(value: &TimeFields) -> Self {
         Self {
@@ -95,7 +101,7 @@ impl Error for TimeParseError {}
 
 #[cfg(test)]
 mod tests {
-    use super::{TimeFields, TimeStamp};
+    use super::{DEFAULT_FORMAT, TimeFields, TimeStamp};
 
     #[test]
     fn time_fields() {
@@ -105,5 +111,21 @@ mod tests {
     }
 
     #[test]
-    fn time_str_conv() {}
+    fn time_now() {
+        let time1 = TimeStamp::now();
+        let time2 = TimeStamp::now();
+        assert!(time1 <= time2);
+    }
+
+    #[test]
+    fn time_str_conv() {
+        let str = "2025/03/27 02:58";
+        let time = TimeStamp::from(&TimeFields::new(2025, 3, 27, 2, 58).unwrap());
+
+        let formatted = time.format_str_fmt(DEFAULT_FORMAT);
+        assert_eq!(str, formatted);
+
+        let parsed = TimeStamp::parse_str_fmt(str, DEFAULT_FORMAT).unwrap();
+        assert_eq!(time, parsed);
+    }
 }
