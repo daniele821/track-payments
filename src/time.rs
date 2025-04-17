@@ -3,12 +3,12 @@ use std::{error::Error, fmt::Display};
 use chrono::{DateTime, Datelike, Local, NaiveDateTime, ParseError, TimeZone, Timelike, Utc};
 pub const DEFAULT_FORMAT: &str = "%Y/%m/%d %H:%M";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TimeStamp {
     unix_secs: i64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TimeFields {
     fields: DateTime<Utc>,
 }
@@ -47,19 +47,19 @@ impl TimeFields {
             .map(|fields| Self { fields })
     }
 
-    pub fn years(&self) -> i32 {
+    pub fn year(&self) -> i32 {
         self.fields.year()
     }
-    pub fn months(&self) -> u8 {
+    pub fn month(&self) -> u8 {
         self.fields.month().try_into().unwrap()
     }
-    pub fn days(&self) -> u8 {
+    pub fn day(&self) -> u8 {
         self.fields.day().try_into().unwrap()
     }
-    pub fn hours(&self) -> u8 {
+    pub fn hour(&self) -> u8 {
         self.fields.hour().try_into().unwrap()
     }
-    pub fn minutes(&self) -> u8 {
+    pub fn minute(&self) -> u8 {
         self.fields.minute().try_into().unwrap()
     }
 }
@@ -92,3 +92,18 @@ impl Display for TimeParseError {
     }
 }
 impl Error for TimeParseError {}
+
+#[cfg(test)]
+mod tests {
+    use super::{TimeFields, TimeStamp};
+
+    #[test]
+    fn time_fields() {
+        let timestamp = TimeStamp::from(1_743_044_280);
+        let fields = TimeFields::new(2025, 3, 27, 2, 58).unwrap();
+        assert_eq!(fields, TimeFields::from(&timestamp));
+    }
+
+    #[test]
+    fn time_str_conv() {}
+}
