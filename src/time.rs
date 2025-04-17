@@ -69,10 +69,20 @@ impl From<i64> for TimeStamp {
         Self { unix_secs: value }
     }
 }
+impl From<&i64> for TimeStamp {
+    fn from(value: &i64) -> Self {
+        Self::from(*value)
+    }
+}
 
 impl From<&TimeStamp> for i64 {
     fn from(value: &TimeStamp) -> Self {
         value.unix_secs
+    }
+}
+impl From<TimeStamp> for i64 {
+    fn from(value: TimeStamp) -> Self {
+        Self::from(&value)
     }
 }
 
@@ -83,12 +93,22 @@ impl From<&TimeFields> for TimeStamp {
         }
     }
 }
+impl From<TimeFields> for TimeStamp {
+    fn from(value: TimeFields) -> Self {
+        Self::from(&value)
+    }
+}
 
 impl From<&TimeStamp> for TimeFields {
     fn from(value: &TimeStamp) -> Self {
         Self {
             fields: DateTime::from_timestamp(value.unix_secs, 0).unwrap(),
         }
+    }
+}
+impl From<TimeStamp> for TimeFields {
+    fn from(value: TimeStamp) -> Self {
+        Self::from(&value)
     }
 }
 
@@ -107,7 +127,7 @@ mod tests {
     fn time_fields() {
         let timestamp = TimeStamp::from(1_743_044_280);
         let fields = TimeFields::new(2025, 3, 27, 2, 58).unwrap();
-        assert_eq!(fields, TimeFields::from(&timestamp));
+        assert_eq!(fields, TimeFields::from(timestamp));
     }
 
     #[test]
@@ -120,7 +140,7 @@ mod tests {
     #[test]
     fn time_str_conv() {
         let str = "2025/03/27 02:58";
-        let time = TimeStamp::from(&TimeFields::new(2025, 3, 27, 2, 58).unwrap());
+        let time = TimeStamp::from(TimeFields::new(2025, 3, 27, 2, 58).unwrap());
 
         let formatted = time.format_str_fmt(DEFAULT_FORMAT);
         assert_eq!(str, formatted);
