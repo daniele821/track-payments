@@ -1,11 +1,11 @@
 use chrono::Local;
 
 #[derive(Debug)]
-pub struct Time {
+pub struct FakeUtcTime {
     unix_secs: i64,
 }
 
-impl Time {
+impl FakeUtcTime {
     pub fn now() -> Self {
         Self {
             unix_secs: Local::now().naive_local().and_utc().timestamp(),
@@ -13,7 +13,7 @@ impl Time {
     }
 }
 
-impl From<i64> for Time {
+impl From<i64> for FakeUtcTime {
     fn from(value: i64) -> Self {
         Self { unix_secs: value }
     }
