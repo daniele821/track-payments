@@ -1,5 +1,4 @@
-use chrono::{DateTime, Datelike, Local, NaiveDate, ParseError, TimeZone, Timelike, Utc};
-use std::{error::Error, fmt::Display};
+use chrono::{DateTime, Datelike, Local, TimeZone, Timelike, Utc};
 pub const DEFAULT_FORMAT: &str = "%Y/%m/%d %H:%M";
 
 #[derive(Debug)]
@@ -10,11 +9,6 @@ pub struct TimeStamp {
 #[derive(Debug)]
 pub struct TimeFields {
     fields: DateTime<Utc>,
-}
-
-#[derive(Debug)]
-pub enum TimeError {
-    ParseError(ParseError),
 }
 
 impl TimeStamp {
@@ -70,11 +64,3 @@ impl From<TimeStamp> for TimeFields {
         }
     }
 }
-
-impl Display for TimeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
-
-impl Error for TimeError {}
